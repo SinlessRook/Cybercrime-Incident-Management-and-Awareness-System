@@ -28,7 +28,10 @@ def analytics_summary(request):
 		resolved_data = IncidentAssignments.objects.filter(incident__status='resolved').annotate(week=TruncWeek('resolved_at')).values('week').annotate(count=Count('id')).order_by('week')
 
 		# Combine weeks from both datasets
-		all_weeks = sorted(set(data['week'] for data in created_data) | set(data['week'] for data in resolved_data))[-4:]  # Limit to the last 4 weeks
+		try:
+			all_weeks = sorted(set(data['week'] for data in created_data) | set(data['week'] for data in resolved_data))[-4:]  # Limit to the last 4 weeks
+		except:
+			all_weeks = []
 
 		# Prepare graph data with zero-filled values
 		created_dict = {data['week']: data['count'] for data in created_data}
@@ -145,7 +148,10 @@ def analytics_detailed(request):
 	resolved_data = IncidentAssignments.objects.filter(incident__status='resolved').annotate(month=TruncWeek('resolved_at', kind='month')).values('month').annotate(count=Count('id')).order_by('month')
 
 	# Combine months from both datasets
-	all_months = sorted(set(data['month'] for data in created_data) | set(data['month'] for data in resolved_data))[-6:]  # Limit to the last 6 months
+	try:
+		all_months = sorted(set(data['month'] for data in created_data) | set(data['month'] for data in resolved_data))[-6:]  # Limit to the last 6 months
+	except:
+		all_months = []
 
 	# Prepare graph data with zero-filled values
 	created_dict = {data['month']: data['count'] for data in created_data}
