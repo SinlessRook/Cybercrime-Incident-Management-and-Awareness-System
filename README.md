@@ -75,9 +75,6 @@ npm start
 - [ ] ER diagram design  
 - [ ] Create tables & relationships  
 - [ ] Seed initial data (user roles, test incidents, awareness content)  
-- [ ] Write optimized SQL queries for CRUD operations  
-- [ ] Implement indexing for faster queries  
-- [ ] Setup automated backup & restore scripts  
 - [ ] Add constraints & triggers for data integrity  
 
 ### Backend
@@ -87,9 +84,6 @@ npm start
 - [ ] Admin dashboard endpoints
 - [ ] Input validation & error handling middleware
 - [ ] File upload handling for evidence
-- [ ] API documentation (Swagger/OpenAPI)
-- [ ] Unit & integration tests with coverage
-- [ ] CI/CD pipeline setup for deployments
 - [ ] Logging & monitoring setup
 
 ### Frontend
@@ -123,7 +117,7 @@ npm start
 
 | ![Guest Landing Page 1](./Screenshots/GuestLandingPage1.png) | ![Guest Landing Page 2](./Screenshots/GuestLandingPage2.png) |
 |:--:|:--:|
-| *Guest Landing Page* | *Guest Landing Page (Alternate)* |
+| *Guest Landing Page* | *Guest Landing Page* |
 
 | ![Admin Incident](./Screenshots/AdminIncident.png) | ![Admin User Management](./Screenshots/AdminUsermangement.png) |
 |:--:|:--:|
