@@ -113,8 +113,38 @@ npm start
 * [`Presentation.pdf`](./Documentation/presentation.pdf)-Project Presentation
 * [`Software Requirements Specification document`](./Documentation/srs.pdf)
 * [`Roadmap.pdf`](./Documentation/Roadmap.pdf)-Track the progress and Roadmap
+* [`Project Documentation`](./Documentation//ProjectDocumentation.pdf)-Complete setup instructions
 
 
----
+
+<h2 align="center">🖼️ Screenshots</h2>
+
+<div align="center">
+
+| ![Guest Landing Page 1](./Screenshots/GuestLandingPage1.png) | ![Guest Landing Page 2](./Screenshots/GuestLandingPage2.png) |
+|:--:|:--:|
+| *Guest Landing Page* | *Guest Landing Page (Alternate)* |
+
+| ![Admin Incident](./Screenshots/AdminIncident.png) | ![Admin User Management](./Screenshots/AdminUsermangement.png) |
+|:--:|:--:|
+| *Admin Incident Management* | *Admin User Management* |
+
+| ![Admin Analytics](./Screenshots/adminAnalytics.png) | ![Admin Messaging](./Screenshots/AdminMessaging.png) |
+|:--:|:--:|
+| *Admin Analytics Dashboard* | *Admin Messaging* |
+
+| ![Team Assignment](./Screenshots/TeamAssignment.png) | ![Awareness Hub 1](./Screenshots/AwarenessPage1.png) |
+|:--:|:--:|
+| *Team Assignment* | *Awareness Hub* |
+
+| ![Awareness Hub 2](./Screenshots/AwarenessPage2.png) | ![Profile](./Screenshots/Profile.png) |
+|:--:|:--:|
+| *Awareness Hub (Alternate)* | *User Profile* |
+
+| ![Activity Log (Admin)](./Screenshots/ActivityLogAdmin.png) |
+|:--:|
+| *Activity Log (Admin)* |
+
+</div>
 
 🔥 With CIMAS, we aim to make digital spaces safer through **efficient reporting, transparent investigation, and public awareness**.
