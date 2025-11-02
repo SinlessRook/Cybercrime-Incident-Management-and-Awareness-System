@@ -17,7 +17,10 @@ import {
   ChevronUp,
   TrendingUp,
   Folder,
-  Shield
+  Shield,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import axiosInstance from '../../api/axiosConfig';
 
@@ -26,6 +29,7 @@ const AllIncidents = () => {
   const [filteredIncidents, setFilteredIncidents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('recent'); // Combined sort type and order
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedIncident, setExpandedIncident] = useState(null);
@@ -35,8 +39,18 @@ const AllIncidents = () => {
     const fetchIncidents = async () => {
       try {
         setLoading(true);
+        // Small delay to ensure proper rendering
+        await new Promise(resolve => setTimeout(resolve, 100));
         const response = await axiosInstance.get('/incidents');
-        const incidentsData = response.data.incidents || response.data;
+        let incidentsData = response.data.incidents || response.data;
+        
+        // Sort data before setting state
+        incidentsData = [...incidentsData].sort((a, b) => {
+          const dateA = new Date(a.reported_at || a.reportedDate || 0);
+          const dateB = new Date(b.reported_at || b.reportedDate || 0);
+          return dateB - dateA; // Most recent first
+        });
+        
         setIncidents(incidentsData);
         setFilteredIncidents(incidentsData);
         setError(null);
@@ -51,35 +65,92 @@ const AllIncidents = () => {
     fetchIncidents();
   }, []);
 
-  // Filter incidents based on search and status
+  // Filter and sort incidents with debouncing for search
   useEffect(() => {
-    let filtered = incidents;
+    const timeoutId = setTimeout(() => {
+      let filtered = incidents;
 
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(incident => 
-        incident.id?.toString().includes(searchQuery) ||
-        incident.caseId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.reportedBy?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.investigator?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        incident.location?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+      // Apply search filter
+      if (searchQuery) {
+        filtered = filtered.filter(incident => 
+          incident.id?.toString().includes(searchQuery) ||
+          incident.caseId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.reportedBy?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.investigator?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          incident.location?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(incident => {
-        const normalizedIncidentStatus = incident.status?.toLowerCase().replace(/\s+/g, '_');
-        const normalizedFilterStatus = statusFilter.toLowerCase().replace(/\s+/g, '_');
-        return normalizedIncidentStatus === normalizedFilterStatus;
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(incident => {
+          const normalizedIncidentStatus = incident.status?.toLowerCase().replace(/\s+/g, '_');
+          const normalizedFilterStatus = statusFilter.toLowerCase().replace(/\s+/g, '_');
+          return normalizedIncidentStatus === normalizedFilterStatus;
+        });
+      }
+
+      // Apply sorting
+      filtered = [...filtered].sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortBy) {
+          case 'recent': {
+            const dateA = new Date(a.reported_at || a.reportedDate || 0);
+            const dateB = new Date(b.reported_at || b.reportedDate || 0);
+            comparison = dateB - dateA; // Most recent first
+            break;
+          }
+          case 'oldest': {
+            const dateA = new Date(a.reported_at || a.reportedDate || 0);
+            const dateB = new Date(b.reported_at || b.reportedDate || 0);
+            comparison = dateA - dateB; // Oldest first
+            break;
+          }
+          case 'priority-high': {
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            const priorityA = priorityOrder[a.priority?.toLowerCase()] || 0;
+            const priorityB = priorityOrder[b.priority?.toLowerCase()] || 0;
+            comparison = priorityB - priorityA; // High to low
+            break;
+          }
+          case 'priority-low': {
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            const priorityA = priorityOrder[a.priority?.toLowerCase()] || 0;
+            const priorityB = priorityOrder[b.priority?.toLowerCase()] || 0;
+            comparison = priorityA - priorityB; // Low to high
+            break;
+          }
+          case 'status': {
+            const statusOrder = { in_progress: 1, assigned: 2, resolved: 3 };
+            const statusA = statusOrder[a.status?.toLowerCase().replace(/\s+/g, '_')] || 0;
+            const statusB = statusOrder[b.status?.toLowerCase().replace(/\s+/g, '_')] || 0;
+            comparison = statusA - statusB;
+            break;
+          }
+          case 'id-asc': {
+            comparison = (a.id || 0) - (b.id || 0);
+            break;
+          }
+          case 'id-desc': {
+            comparison = (b.id || 0) - (a.id || 0);
+            break;
+          }
+          default:
+            comparison = 0;
+        }
+
+        return comparison;
       });
-    }
 
-    setFilteredIncidents(filtered);
-  }, [searchQuery, statusFilter, incidents]);
+      setFilteredIncidents(filtered);
+    }, searchQuery ? 300 : 0); // Debounce search by 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, statusFilter, incidents, sortBy]);
 
   // Get status badge styling
   const getStatusBadge = (status) => {
@@ -177,15 +248,49 @@ const AllIncidents = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="w-full min-h-screen p-6 space-y-6">
+        {/* Header Skeleton */}
+        <div className="space-y-4">
+          <div className="h-10 bg-gray-800 rounded-lg w-1/3 animate-pulse"></div>
+          <div className="h-6 bg-gray-800 rounded-lg w-1/4 animate-pulse"></div>
+        </div>
+
+        {/* Search and Filter Skeleton */}
+        <div className="flex gap-4">
+          <div className="flex-1 h-12 bg-gray-800 rounded-lg animate-pulse"></div>
+          <div className="h-12 w-48 bg-gray-800 rounded-lg animate-pulse"></div>
+          <div className="h-12 w-48 bg-gray-800 rounded-lg animate-pulse"></div>
+        </div>
+
+        {/* Incident Cards Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-xl p-6">
+              <div className="space-y-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-16 bg-gray-800 rounded"></div>
+                  <div className="h-6 w-32 bg-gray-800 rounded-full"></div>
+                  <div className="h-6 w-32 bg-gray-800 rounded-full"></div>
+                </div>
+                <div className="h-6 bg-gray-800 rounded w-3/4"></div>
+                <div className="h-20 bg-gray-800 rounded"></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="h-5 bg-gray-800 rounded"></div>
+                  <div className="h-5 bg-gray-800 rounded"></div>
+                  <div className="h-5 bg-gray-800 rounded"></div>
+                  <div className="h-5 bg-gray-800 rounded"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="w-full p-6">
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
           {error}
         </div>
@@ -194,7 +299,7 @@ const AllIncidents = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="w-full p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -232,6 +337,24 @@ const AllIncidents = () => {
               <option value="in_progress">In Progress</option>
               <option value="assigned">Assigned</option>
               <option value="resolved">Resolved</option>
+            </select>
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <ArrowUpDown className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="pl-10 pr-8 py-3 bg-black border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer min-w-[200px]"
+            >
+              <option value="recent">Most Recent First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="priority-high">Priority: High to Low</option>
+              <option value="priority-low">Priority: Low to High</option>
+              <option value="status">By Status</option>
+              <option value="id-asc">ID: Low to High</option>
+              <option value="id-desc">ID: High to Low</option>
             </select>
           </div>
         </div>

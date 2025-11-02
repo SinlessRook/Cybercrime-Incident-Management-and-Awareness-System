@@ -101,7 +101,14 @@ def assign_case(request, id, userId):
 @permission_classes([IsAuthenticated])
 def get_assigned_cases_me(request):
 	userId = request.user.id
-	assigned_cases = IncidentAssignments.objects.filter(assigned_to__id=userId)
+	user_role = request.user.role
+	if user_role != 'investigator' and user_role != 'admin':
+		return Response({"error": "Only investigators and admins can view assigned cases"}, status=status.HTTP_403_FORBIDDEN)
+	if user_role == 'admin':
+		# Admins can view all assigned cases
+		assigned_cases = IncidentAssignments.objects.filter(assigned_to__isnull=False)
+	else:
+		assigned_cases = IncidentAssignments.objects.filter(assigned_to__id=userId)
 	data = [{
 		"id": ac.incident.id if ac.incident.id else 0,
 		"title": ac.incident.title if ac.incident.title else "No Title",

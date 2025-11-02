@@ -30,7 +30,7 @@ def get_logs(request):
             "target_table": log.target_table,
             "target_id": log.target_id,
         }
-        for log in logs
+        for log in logs.order_by('-timestamp')
     ]
     return Response(data)
 

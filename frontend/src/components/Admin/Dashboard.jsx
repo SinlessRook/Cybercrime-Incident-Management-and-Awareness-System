@@ -2,7 +2,6 @@ import RoleBasedTab from "../../components/RoleBasedTab";
 import IncidentChart from "../IncidentChart";
 import ResponseTimeGraph from "./ResponseTimeGraph";
 import { useState, useEffect } from "react";
-import IncidentCards from "./IncidentCards";
 import IncidentHotspots from "./IncidentHotspots";
 import SystemMetrics from "../SystemMetrics";
 import TypeOfCrime from "./TypeOfCrime";
@@ -10,67 +9,65 @@ import AllIncidents from "./AllIncidents";
 import Users from "./Users";
 import AssignCase from "./AssignCase";
 import axiosInstance from "../../api/axiosConfig";
-import { CheckCircle, Users as UsersIcon, Clock, BarChart3, Mail, Shield, Lock, FileText, CreditCard, Wifi, Globe, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Users as UsersIcon, Clock, BarChart3, Mail, Shield, Lock, FileText, CreditCard, Wifi, Globe, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import ActivityLog from "./ActivityLog";
+import { motion } from "framer-motion";
 
 
 function DashboardAdmin() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [analyticsData, setAnalyticsData] = useState(null);
   const [detailedAnalytics, setDetailedAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showScrollButton, setShowScrollButton] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(false);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get('/analytics/summary');
-        setAnalyticsData(response.data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching analytics:', err);
-        setError('Failed to load analytics data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalytics();
-  }, []);
 
   useEffect(() => {
     const fetchDetailedAnalytics = async () => {
-      if (activeTab === 'analytics') {
+      if (activeTab === 'overview') {
         try {
           const response = await axiosInstance.get('/analytics/detailed');
           setDetailedAnalytics(response.data);
         } catch (err) {
           console.error('Error fetching detailed analytics:', err);
         }
+        finally{
+          setLoading(false);
+        }
       }
     };
 
     fetchDetailedAnalytics();
-  }, [activeTab]);
+  }, []);
 
-  // Transform API data for IncidentCards
-  const incidentStats = analyticsData ? {
-    total: analyticsData.total_cases || 0,
-    critical: analyticsData.critical_cases || 0,
-    solved: analyticsData.solved_cases || 0,
-    pending: (analyticsData.total_cases || 0) - (analyticsData.in_progress_cases || 0) - (analyticsData.resolved_cases || 0) - (analyticsData.rejected || 0),
-    inProgress: analyticsData.in_progress_cases || 0,
-    rejected: analyticsData.rejected || 0,
-  } : null;
+  // Scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show button after scrolling down 300px
+      if (window.scrollY > 300) {
+        setShowScrollButton(true);
+      } else {
+        setShowScrollButton(true);
+      }
 
-  // Transform API graph data for IncidentChart
-  const chartData = analyticsData?.graph_data ? 
-    analyticsData.graph_data.weeks.map((week, index) => ({
-      month: week,
-      incidents: analyticsData.graph_data.created[index] || 0,
-      resolved: analyticsData.graph_data.resolved[index] || 0,
-    })) : [];
+      // Check if at bottom
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const clientHeight = window.innerHeight;
+      
+      if (scrollHeight - scrollTop - clientHeight < 100) {
+        setIsAtBottom(true);
+      } else {
+        setIsAtBottom(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+
 
   // Transform detailed analytics data for analytics tab
   const systemMetricsData = detailedAnalytics ? [
@@ -125,8 +122,8 @@ function DashboardAdmin() {
   const categoryData = detailedAnalytics?.category_graph?.categories?.map((category, index) => ({
     type: category || 'Unknown',
     count: detailedAnalytics.category_graph.counts[index] || 0,
-    percentage: ((detailedAnalytics.category_graph.counts[index] || 0) / 
-                 detailedAnalytics.category_graph.counts.reduce((a, b) => a + b, 0) * 100).toFixed(1),
+    percentage: ((detailedAnalytics.category_graph.counts[index] || 0) /
+      detailedAnalytics.category_graph.counts.reduce((a, b) => a + b, 0) * 100).toFixed(1),
     icon: iconList[index % iconList.length],
     color: ['#ef4444', '#f97316', '#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'][index % 7],
     severity: ['Critical', 'High', 'Medium', 'Low'][Math.floor(Math.random() * 4)],
@@ -138,10 +135,10 @@ function DashboardAdmin() {
     const priorities = detailedAnalytics.time_taken_graph.priorities || [];
     const timeTaken = detailedAnalytics.time_taken_graph.time_taken || {};
     const counts = detailedAnalytics.time_taken_graph.counts || {};
-    
+
     // Create time ranges
     const timeRanges = ['0-2h', '2-4h', '4-8h', '8-24h', '24h+'];
-    
+
     return timeRanges.map(range => {
       const dataPoint = { time: range };
       priorities.forEach(priority => {
@@ -164,6 +161,26 @@ function DashboardAdmin() {
       left: `${30 + (index * 11) % 50}%`
     }
   })).filter(item => item.incidents > 0).slice(0, 10) || [];
+
+  // Scroll down helper function
+  const scrollDown = () => {
+    window.scrollBy({ top: window.innerHeight * 0.7, behavior: 'smooth' });
+  };
+
+  // Scroll up helper function
+  const scrollUp = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Toggle scroll based on position
+  const handleScrollClick = () => {
+    if (isAtBottom) {
+      scrollUp();
+    } else {
+      scrollDown();
+    }
+  };
+
   return (
     <div className="mx-6">
       <div className="h-21" />
@@ -187,20 +204,12 @@ function DashboardAdmin() {
       )}
 
       {/* Main Content */}
-      {!loading && !error && analyticsData && (
+      {!loading && !error && detailedAnalytics && (
         <>
           <RoleBasedTab activeTab={activeTab} setActiveTab={setActiveTab} />
-          {activeTab === 'overview' && (
-            <>
-              <div className="flex gap-2 mt-12 flex-col md:flex-row">
-                <IncidentChart data={chartData} />
-                <IncidentCards stats={incidentStats} />
-              </div>
-            </>
-          )}
           {activeTab === "users" && <Users />}
           {activeTab === "incidents" && <AllIncidents />}
-          {activeTab === 'analytics' && (
+          {activeTab === 'overview' && (
             <>
               {detailedAnalytics ? (
                 <>
@@ -211,6 +220,7 @@ function DashboardAdmin() {
                   <TypeOfCrime data={categoryData} />
                   <ResponseTimeGraph data={responseTimeData} />
                   <IncidentHotspots hotspots={hotspotData} />
+
                 </>
               ) : (
                 <div className="flex items-center justify-center h-64 mt-12">
@@ -226,6 +236,36 @@ function DashboardAdmin() {
           )}
           {activeTab === 'activity' && <ActivityLog />}
         </>
+      )}
+
+      {/* Floating Scroll Button */}
+      {showScrollButton && (
+        <motion.button
+          whileHover={{ scale: [1, 1.1, 1] }}
+          onClick={handleScrollClick}
+          className="fixed bottom-6 right-6 z-50 p-3 bg-blue-500/90 backdrop-blur-sm text-white rounded-full shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all duration-300 group animate-pulse"
+          aria-label={isAtBottom ? "Scroll to top" : "Scroll down"}
+        >
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            {isAtBottom ? (
+              <ChevronUp className="h-5 w-5" />
+            ) : (
+              <ChevronDown className="h-5 w-5" />
+            )}
+          </motion.div>
+          <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-900/90 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            {isAtBottom ? "Top" : "More"}
+          </span>
+        </motion.button>
       )}
     </div>
   );

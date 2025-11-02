@@ -19,7 +19,7 @@ export const getUnassignedCases = async () => {
 export const getAssignedCases = async () => {
   try {
     // Get all incidents
-    const incidentsResponse = await axiosInstance.get('/incidents');
+    const incidentsResponse = await axiosInstance.get('/cases/assigned/');
     const incidents = incidentsResponse.data.incidents || incidentsResponse.data;
     
     // Filter only assigned cases

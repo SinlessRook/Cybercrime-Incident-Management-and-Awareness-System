@@ -24,13 +24,11 @@ const RoleBasedTab = ({ activeTab, setActiveTab }) => {
 
     const roleTabs = {
       admin: [
-        { value: 'overview', label: 'Overview', icon: BarChart3 },
+        { value: 'overview', label: 'Overview', icon: TrendingUp },
         { value: 'users', label: 'User Management', icon: Users },
         { value: 'incidents', label: 'All Incidents', icon: AlertTriangle },
-        { value: 'analytics', label: 'Analytics', icon: TrendingUp },
         { value: 'team', label: 'Team Management', icon: UserCheck },
         { value: 'activity', label: 'Activity Log', icon: Activity },
-        // { value: 'settings', label: 'Settings', icon: Settings },
       ],
       investigator: [
         { value: 'overview', label: 'Overview', icon: BarChart3 },

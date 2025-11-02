@@ -148,11 +148,7 @@ def analytics_detailed(request):
 	resolved_data = IncidentAssignments.objects.filter(incident__status='resolved').annotate(month=TruncWeek('resolved_at', kind='month')).values('month').annotate(count=Count('id')).order_by('month')
 
 	# Combine months from both datasets
-	try:
-		all_months = sorted(set(data['month'] for data in created_data) | set(data['month'] for data in resolved_data))[-6:]  # Limit to the last 6 months
-	except:
-		all_months = []
-
+	all_months = sorted(set(data['month'] for data in created_data) | set(data['month'] for data in resolved_data))[-6:]  # Limit to the last 6 months
 	# Prepare graph data with zero-filled values
 	created_dict = {data['month']: data['count'] for data in created_data}
 	resolved_dict = {data['month']: data['count'] for data in resolved_data}

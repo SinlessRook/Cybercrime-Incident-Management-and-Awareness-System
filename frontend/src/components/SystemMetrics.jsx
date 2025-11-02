@@ -121,8 +121,6 @@ useEffect(() => {
                 scale: { duration: 0.4, type: "spring", stiffness: 300 },
                 y: { duration: 0.4 }
               }}
-              onMouseEnter={() => {setHoveredIndex(idx), setActiveIndex(idx)}}
-              onMouseLeave={() =>{ setHoveredIndex(prev=>prev+1),setHoveredIndex(null), setActiveIndex(prev => (prev + 1) % metricsData.length)}}
               style={{
                 boxShadow: isActive 
                   ? `0 20px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px ${card.color === 'green' ? 'rgba(34, 197, 94, 0.3)' : card.color === 'blue' ? 'rgba(59, 130, 246, 0.3)' : card.color === 'purple' ? 'rgba(168, 85, 247, 0.3)' : 'rgba(249, 115, 22, 0.3)'}`
