@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext"
 
 export default function AwarenessCreate() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, token } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [loading, setLoading] = useState(false)
   const [flairs, setFlairs] = useState([])
   const [error, setError] = useState(null)
@@ -72,12 +72,6 @@ export default function AwarenessCreate() {
       return
     }
 
-    if (!token) {
-      setError("Authentication token not found. Please login again.")
-      navigate("/login")
-      return
-    }
-
     try {
       setLoading(true)
       const formDataToSend = new FormData()
@@ -91,7 +85,7 @@ export default function AwarenessCreate() {
         formDataToSend.append("image", formData.image)
       }
 
-      console.log("[v0] Submitting form with token:", token ? "Present" : "Missing")
+      console.log("[v0] Submitting form")
       console.log("[v0] Form data fields:", {
         title: formData.title,
         content: formData.content.substring(0, 50) + "...",
@@ -102,7 +96,11 @@ export default function AwarenessCreate() {
 
       const response = await createAwarenessResource(formDataToSend)
       console.log("[v0] Create response:", response)
-      navigate(`/awareness/${response.id}`)
+      
+      // Small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate(`/awareness/${response.id}`)
+      }, 100)
     } catch (err) {
       console.error("[v0] Create error:", err)
       if (err.response?.status === 401) {
@@ -155,7 +153,7 @@ export default function AwarenessCreate() {
           <h1 className="text-4xl font-bold text-slate-100 mb-2">Create New Article</h1>
           <p className="text-slate-400">Share your cybersecurity insights with the community</p>
           <p className="text-sm text-indigo-400 mt-3">
-            Publishing as: <span className="font-semibold">{user?.email || user?.username || "User"}</span>
+            Publishing as: <span className="font-semibold">{user?.name || "User"}</span>
           </p>
         </div>
 

@@ -71,9 +71,9 @@ export default function AwarenessList() {
             {flairs.map((flair) => (
               <button
                 key={flair.id}
-                onClick={() => setSelectedFlair(flair.name === selectedFlair ? null : flair.name)}
+                onClick={() => setSelectedFlair(flair.id === selectedFlair ? null : flair.id)}
                 className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ${
-                  selectedFlair === flair.name
+                  selectedFlair === flair.id
                     ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/40"
                     : "bg-slate-800 text-slate-300 border border-slate-700 hover:border-indigo-500/50 hover:bg-slate-700/50"
                 }`}
@@ -95,11 +95,20 @@ export default function AwarenessList() {
                 <div className="h-full bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden hover:border-indigo-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-600/20 flex flex-col backdrop-blur-sm">
                   <div className="p-6 flex-1 flex flex-col">
                     <div className="mb-4">
-                      {res.flair && (
+                      {Array.isArray(res.flair) && res.flair.length > 0 ? (
+                        res.flair.map((f) => (
+                          <span
+                            key={f.id}
+                            className="inline-block text-xs font-semibold text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full border border-indigo-500/30 mr-2 mb-1"
+                          >
+                            {f.name}
+                          </span>
+                        ))
+                      ) : res.flair && res.flair.name ? (
                         <span className="inline-block text-xs font-semibold text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full border border-indigo-500/30">
                           {res.flair.name}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     <h2 className="text-xl font-bold text-slate-100 mb-3 group-hover:text-indigo-400 transition-colors line-clamp-2">
                       {res.title}

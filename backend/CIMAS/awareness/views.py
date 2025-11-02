@@ -36,7 +36,7 @@ class AwarenessResourceListCreateView(generics.ListCreateAPIView):
             # Try filtering by name first, else assume it's an ID
             queryset = queryset.filter(
                 flair__name__iexact=flair_param
-            ) | queryset.filter(flair_id=flair_param)
+            ) | queryset.filter(flair=flair_param)
 
         return queryset.distinct()
 

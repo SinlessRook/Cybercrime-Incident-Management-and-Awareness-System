@@ -75,13 +75,22 @@ export default function AwarenessDetail() {
 
           <div className="p-8 md:p-12">
             {/* Category Badge */}
-            {resource.flair && (
               <div className="mb-6">
-                <span className="inline-block text-xs font-semibold text-indigo-400 bg-indigo-950/50 px-4 py-2 rounded-full border border-indigo-500/30">
-                  {resource.flair.name}
-                </span>
+                 {Array.isArray(resource.flair) && resource.flair.length > 0 ? (
+                        resource.flair.map((f) => (
+                          <span
+                            key={f.id}
+                            className="inline-block text-xs font-semibold text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full border border-indigo-500/30 mr-2 mb-1"
+                          >
+                            {f.name}
+                          </span>
+                        ))
+                      ) : resource.flair && resource.flair.name ? (
+                        <span className="inline-block text-xs font-semibold text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full border border-indigo-500/30">
+                          {resource.flair.name}
+                        </span>
+                      ) : null}
               </div>
-            )}
 
             {/* Title */}
             <h1 className="text-4xl md:text-5xl font-bold text-slate-100 mb-6 leading-tight">{resource.title}</h1>
@@ -113,7 +122,7 @@ export default function AwarenessDetail() {
 
         <div className="mt-12 text-center">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/awareness")}
             className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30"
           >
             <ArrowLeft className="w-4 h-4" />
