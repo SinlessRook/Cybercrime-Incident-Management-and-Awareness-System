@@ -18,7 +18,7 @@ def get_investigators(request):
         return JsonResponse({'error': 'You do not have permission to view this.'}, status=403)
     investigators = Investigators.objects.select_related('user').all()
     investigators_data = [{
-        'id': inv.investigator_id,
+        'id': inv.user.id,
         'email': inv.user.email,
         'first_name': inv.user.first_name,
         'last_name': inv.user.last_name,

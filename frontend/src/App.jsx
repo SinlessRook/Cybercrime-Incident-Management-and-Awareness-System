@@ -16,6 +16,7 @@ import Messaging from "./components/Messaging"
 import AwarenessList from "./components/AwarenessList"
 import AwarenessDetail from "./components/AwarenessDetail"
 import AwarenessCreate from "./components/AwarenessCreate"
+import AuthRedirect from "./components/AuthRedirect"
 
 // Component for role-based dashboard rendering
 function RoleBasedDashboard() {
@@ -63,8 +64,22 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/signup"
+            element={
+              <AuthRedirect>
+                <Signup />
+              </AuthRedirect>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <AuthRedirect>
+                <Login />
+              </AuthRedirect>
+            }
+          />
           <Route path="/awareness" element={<AwarenessList />} />
           <Route path="/awareness/:id" element={<AwarenessDetail />} />
           <Route
