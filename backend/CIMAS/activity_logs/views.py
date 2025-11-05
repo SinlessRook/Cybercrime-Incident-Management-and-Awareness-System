@@ -17,7 +17,7 @@ def get_logs(request):
     if role == "admin":
         logs = ActivityLog.objects.all()
     elif role == "investigator":
-        logs = ActivityLog.objects.filter(target_table="incidents")
+        logs = ActivityLog.objects.filter(user=request.user)
     else:
         logs = ActivityLog.objects.filter(user=request.user)
 
