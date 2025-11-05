@@ -21,7 +21,8 @@ const InvestigatorOverview = () => {
     resolved: 0,
     success_rate: 0,
     cases_this_month: 0,
-    upcoming_deadlines: []
+    upcoming_deadlines: [],
+    recentActivity: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +38,8 @@ const InvestigatorOverview = () => {
           resolved: data.resolved_cases || 0,
           success_rate: data.success_rate || 0,
           cases_this_month: data.cases_this_month || 0,
-          upcoming_deadlines: data.upcoming_deadlines || []
+          upcoming_deadlines: data.upcoming_deadlines || [],
+          recentActivity: data.recent_activity || []
         });
       } catch (error) {
         console.error('Error fetching analytics:', error);
@@ -48,33 +50,6 @@ const InvestigatorOverview = () => {
 
     fetchAnalytics();
   }, []);
-
-  const recentActivity = [
-    {
-      id: 1,
-      action: 'Case #12 marked as resolved',
-      timestamp: '2 hours ago',
-      type: 'success'
-    },
-    {
-      id: 2,
-      action: 'New evidence uploaded for Case #8',
-      timestamp: '5 hours ago',
-      type: 'info'
-    },
-    {
-      id: 3,
-      action: 'Case #5 status updated to In Progress',
-      timestamp: '1 day ago',
-      type: 'info'
-    },
-    {
-      id: 4,
-      action: 'New case #16 assigned',
-      timestamp: '2 days ago',
-      type: 'warning'
-    }
-  ];
 
   // Calculate days left for upcoming deadlines
   const calculateDaysLeft = (deadline) => {
@@ -90,6 +65,36 @@ const InvestigatorOverview = () => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  // Format timestamp to relative time (e.g., "2 hours ago")
+  const formatRelativeTime = (timestamp) => {
+    if (!timestamp) return 'Unknown time';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    const diffMonths = Math.floor(diffDays / 30);
+    const diffYears = Math.floor(diffDays / 365);
+
+    if (diffYears > 0) return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
+    if (diffMonths > 0) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffMins > 0) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  };
+
+  // Determine activity type based on action
+  const getActivityType = (action) => {
+    const lowerAction = action.toLowerCase();
+    if (lowerAction.includes('resolve')) return 'success';
+    if (lowerAction.includes('assign')) return 'warning';
+    if (lowerAction.includes('update')) return 'info';
+    return 'info';
   };
 
   // Process upcoming deadlines from API data
@@ -246,18 +251,28 @@ const InvestigatorOverview = () => {
             Recent Activity
           </h3>
           <div className="space-y-4">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3 pb-4 border-b border-gray-800 last:border-0 last:pb-0">
-                <div className={`w-2 h-2 rounded-full mt-2 ${
-                  activity.type === 'success' ? 'bg-green-400' :
-                  activity.type === 'warning' ? 'bg-yellow-400' : 'bg-blue-400'
-                }`} />
-                <div className="flex-1">
-                  <p className="text-white text-sm">{activity.action}</p>
-                  <p className="text-gray-400 text-xs mt-1">{activity.timestamp}</p>
-                </div>
+            {stats.recentActivity && stats.recentActivity.length > 0 ? (
+              stats.recentActivity.map((activity, index) => {
+                const activityType = getActivityType(activity.action);
+                return (
+                  <div key={index} className="flex items-start gap-3 pb-4 border-b border-gray-800 last:border-0 last:pb-0">
+                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                      activityType === 'success' ? 'bg-green-400' :
+                      activityType === 'warning' ? 'bg-yellow-400' : 'bg-blue-400'
+                    }`} />
+                    <div className="flex-1">
+                      <p className="text-white text-sm">{activity.action}</p>
+                      <p className="text-gray-400 text-xs mt-1">{formatRelativeTime(activity.timestamp)}</p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8">
+                <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400">No recent activity</p>
               </div>
-            ))}
+            )}
           </div>
         </motion.div>
 

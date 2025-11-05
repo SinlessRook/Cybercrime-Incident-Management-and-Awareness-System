@@ -3,6 +3,7 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from activity_logs.models import ActivityLog
 from incidents.models import IncidentAssignments,Incidents
 from evidence.models import Evidence
 from django.db.models.functions import TruncWeek
@@ -65,6 +66,7 @@ def analytics_summary(request):
 		success_rate = (resolved_cases / total_cases * 100) if total_cases > 0 else 0
 		cases_this_month = IncidentAssignments.objects.filter(assigned_to=request.user, assigned_at__month=datetime.now().month).count()
 		upcoming_deadlines = IncidentAssignments.objects.filter(assigned_to=request.user, assigned_deadline__gte=datetime.now()).order_by('assigned_deadline')[:3]
+		recent_activity = ActivityLog.objects.filter(user=request.user).order_by('-timestamp')[:5]
 		return Response({
 			"total_assigned_cases": total_cases,
 			"in_progress_cases": in_progress_cases,
@@ -76,8 +78,14 @@ def analytics_summary(request):
 				"priority": assignment.priority,
 				"deadline": assignment.assigned_deadline,
 				"assigned_at": assignment.assigned_at
-			} for assignment in upcoming_deadlines]
-
+			} for assignment in upcoming_deadlines],
+			"recent_activity": [
+				{
+					"action": f"{log.action.title()} on {log.target_table} (ID: {log.target_id})",
+					"timestamp": log.timestamp
+				}
+				for log in recent_activity
+			]
 		})
 	elif role=="victim":
 		active_cases = Incidents.objects.filter(user=request.user, status__in=['reported', 'in_progress', 'assigned']).count()
@@ -96,7 +104,8 @@ def analytics_summary(request):
 				"assigned_investigator": incident.assignment.assigned_to.first_name + " " + incident.assignment.assigned_to.last_name if hasattr(incident, 'assignment') else "Not Assigned",
 				"priority": incident.assignment.priority if hasattr(incident, 'assignment') else "N/A",
 				"progress": "50%" if incident.status == "in_progress" else "75%" if incident.status == "assigned" else "0%"
-			} for incident in Incidents.objects.filter(user=request.user, status__in=['reported', 'in_progress', 'assigned']).order_by('-reported_at')[:3]]
+			} for incident in Incidents.objects.filter(user=request.user, status__in=['reported', 'in_progress', 'assigned']).order_by('-reported_at')[:3]],
+			
 		})
 	return Response({"error": "You do not have permission to view this."}, status=403)
 
@@ -148,7 +157,10 @@ def analytics_detailed(request):
 	resolved_data = IncidentAssignments.objects.filter(incident__status='resolved').annotate(month=TruncWeek('resolved_at', kind='month')).values('month').annotate(count=Count('id')).order_by('month')
 
 	# Combine months from both datasets
-	all_months = sorted(set(data['month'] for data in created_data) | set(data['month'] for data in resolved_data))[-6:]  # Limit to the last 6 months
+	# Handle None values in 'month' fields
+	created_months = set(data['month'] for data in created_data if data['month'] is not None)
+	resolved_months = set(data['month'] for data in resolved_data if data['month'] is not None)
+	all_months = sorted(created_months | resolved_months)[-6:]  # Limit to the last 6 months
 	# Prepare graph data with zero-filled values
 	created_dict = {data['month']: data['count'] for data in created_data}
 	resolved_dict = {data['month']: data['count'] for data in resolved_data}
@@ -205,8 +217,8 @@ def analytics_detailed(request):
 		"case_solved_change": case_solved_change,
 		"new_users": new_users,
 		"new_users_change": new_users_change,
-		"avg_resolution_time": avg_resolution_time,
-		"avg_resolution_time_change": avg_resolution_time_change,
+		"avg_resolution_time": round(avg_resolution_time, 2) if avg_resolution_time else 0,
+		"avg_resolution_time_change": round(avg_resolution_time_change, 2) if avg_resolution_time_change else 0,
 		"efficiency": efficincy,
 		"efficiency_change": efficincy_change,
 		"incident_trend_graph": graph_data,
