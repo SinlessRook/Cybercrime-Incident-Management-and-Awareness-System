@@ -18,7 +18,7 @@ export default function AwarenessCreate() {
     title: "",
     content: "",
     synopsis: "",
-    flair: "",
+    flair: [], // Changed to array for multiple selection
     image: null,
   })
 
@@ -46,6 +46,20 @@ export default function AwarenessCreate() {
       ...prev,
       [name]: value,
     }))
+  }
+
+  const handleFlairToggle = (flairId) => {
+    setFormData((prev) => {
+      const currentFlairs = prev.flair || []
+      const isSelected = currentFlairs.includes(flairId)
+      
+      return {
+        ...prev,
+        flair: isSelected
+          ? currentFlairs.filter((id) => id !== flairId)
+          : [...currentFlairs, flairId],
+      }
+    })
   }
 
   const handleImageChange = (e) => {
@@ -78,8 +92,11 @@ export default function AwarenessCreate() {
       formDataToSend.append("title", formData.title)
       formDataToSend.append("content", formData.content)
       formDataToSend.append("synopsis", formData.synopsis || formData.content.slice(0, 120))
-      if (formData.flair) {
-        formDataToSend.append("flair", formData.flair)
+      if (formData.flair && formData.flair.length > 0) {
+        // Send multiple flair IDs for ManyToMany field
+        formData.flair.forEach((flairId) => {
+          formDataToSend.append("flair_id", flairId)
+        })
       }
       if (formData.image) {
         formDataToSend.append("image", formData.image)
@@ -90,7 +107,7 @@ export default function AwarenessCreate() {
         title: formData.title,
         content: formData.content.substring(0, 50) + "...",
         synopsis: formData.synopsis,
-        flair: formData.flair,
+        flair: formData.flair, // Now shows array
         hasImage: !!formData.image,
       })
 
@@ -189,23 +206,46 @@ export default function AwarenessCreate() {
 
             {/* Category Field */}
             <div>
-              <label htmlFor="flair" className="block text-sm font-semibold text-slate-200 mb-3">
-                Category
+              <label className="block text-sm font-semibold text-slate-200 mb-3">
+                Categories (Select one or more)
               </label>
-              <select
-                id="flair"
-                name="flair"
-                value={formData.flair}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              >
-                <option value="">Select a category</option>
-                {flairs.map((flair) => (
-                  <option key={flair.id} value={flair.id}>
-                    {flair.name}
-                  </option>
-                ))}
-              </select>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {flairs.map((flair) => {
+                  const isSelected = formData.flair.includes(flair.id.toString())
+                  return (
+                    <label
+                      key={flair.id}
+                      className={`relative flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? "bg-indigo-950/50 border-indigo-500 shadow-lg shadow-indigo-500/20"
+                          : "bg-slate-900/50 border-slate-700 hover:border-indigo-500/50 hover:bg-slate-800/50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleFlairToggle(flair.id.toString())}
+                        className="w-4 h-4 rounded border-slate-600 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 bg-slate-800 cursor-pointer"
+                      />
+                      <span
+                        className={`text-sm font-medium ${
+                          isSelected ? "text-indigo-300" : "text-slate-300"
+                        }`}
+                      >
+                        {flair.name}
+                      </span>
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-indigo-400 rounded-full"></div>
+                      )}
+                    </label>
+                  )
+                })}
+              </div>
+              {formData.flair.length > 0 && (
+                <p className="text-xs text-indigo-400 mt-3">
+                  {formData.flair.length} {formData.flair.length === 1 ? "category" : "categories"} selected
+                </p>
+              )}
             </div>
 
             {/* Synopsis Field */}
